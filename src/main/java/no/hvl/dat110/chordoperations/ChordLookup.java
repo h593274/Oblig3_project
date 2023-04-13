@@ -19,7 +19,7 @@ import no.hvl.dat110.util.Hash;
 import no.hvl.dat110.util.Util;
 
 /**
- * @author tdoy
+ * @author tdoy, henri
  *
  */
 public class ChordLookup {
@@ -36,29 +36,47 @@ public class ChordLookup {
 		
 		// get the successor of the node
 		
+		NodeInterface nodeSuccess = node.getSuccessor();
+		
 		// check that key is a member of the set {nodeid+1,...,succID} i.e. (nodeid+1 <= key <= succID) using the checkInterval
 		
+		if (Util.checkInterval(key, node.getNodeID().add(BigInteger.ONE), nodeSuccess.getNodeID())) {
+				return nodeSuccess;
+
+		} else  {
+			NodeInterface highestPred = findHighestPredecessor(key);
+			return highestPred.findSuccessor(key);
+		}
 		// if logic returns true, then return the successor
 		
 		// if logic returns false; call findHighestPredecessor(key)
 		
-		// do highest_pred.findSuccessor(key) - This is a recursive call until logic returns true
-				
-		return null;					
+		// do highest_pred.findSuccessor(key) - This is a recursive call until logic returns true					
 	}
-	
+
 	/**
 	 * This method makes a remote call. Invoked from a local client
 	 * @param ID BigInteger
 	 * @return
 	 * @throws RemoteException
 	 */
-	private NodeInterface findHighestPredecessor(BigInteger ID) throws RemoteException {
+	private NodeInterface findHighestPredecessor(BigInteger key) throws RemoteException {
 		
 		// collect the entries in the finger table for this node
 		
+		List<NodeInterface> fingerTable = node.getFingerTable();
+		
 		// starting from the last entry, iterate over the finger table
 		
+		for (int i = fingerTable.size()-1; i >= 0; i--)  {
+			NodeInterface finger = fingerTable.get(i);
+			
+			//NodeInterface fingerStub = Util.getProcessStub(finger.getNodeName(), finger.getPort());
+			
+			if (Util.checkInterval(finger.getNodeID(), node.getNodeID().add(BigInteger.valueOf(1)), key.subtract(BigInteger.valueOf(1)))) {
+				return finger;
+			}
+		}		
 		// for each finger, obtain a stub from the registry
 		
 		// check that finger is a member of the set {nodeID+1,...,ID-1} i.e. (nodeID+1 <= finger <= key-1) using the ComputeLogic

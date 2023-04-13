@@ -2,7 +2,7 @@ package no.hvl.dat110.util;
 
 /**
  * exercise/demo purpose in dat110
- * @author tdoy
+ * @author Henri
  *
  */
 
@@ -12,6 +12,18 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class Hash { 
+	
+	private static BigInteger hashint;
+	private static MessageDigest md;
+	
+	static {
+		try {
+		md = MessageDigest.getInstance("MD5");
+		
+		} catch (NoSuchAlgorithmException e) {
+		e.printStackTrace();
+		}
+	}
 	
 	
 	public static BigInteger hashOf(String entity) {	
@@ -24,9 +36,14 @@ public class Hash {
 		
 		// compute the hash of the input 'entity'
 		
+		byte[] big = md.digest(entity.getBytes());
+		
 		// convert the hash into hex format
 		
 		// convert the hex into BigInteger
+		
+		String str = toHex(big);
+		hashint = new BigInteger(str, 16);
 		
 		// return the BigInteger
 		
@@ -43,12 +60,12 @@ public class Hash {
 		
 		// return the address size
 		
-		return null;
+		return BigInteger.valueOf(2).pow(bitSize());
 	}
 	
 	public static int bitSize() {
 		
-		int digestlen = 0;
+		int digestlen = md.getDigestLength();
 		
 		// find the digest length
 		

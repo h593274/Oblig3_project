@@ -43,9 +43,22 @@ public class Util {
 		// if id = 4, then (6 < 4 <= 2) = false  
 		// if id = 9, then (6 < 9 <= 2) = true
 		
+		boolean cond = false;
+		
+		if (lower.compareTo(upper) > 0) {
+			upper = upper.add(Hash.addressSize());
+			if (id.compareTo(lower) < 0) {
+				id = id.add(Hash.addressSize());
+			}
+		}
+		
+		if (id.compareTo(lower) >= 0 && id.compareTo(upper) <= 0) {
+			cond = true;
+		}
+		
 		// Task: given an identifier, id: check whether pred < id <= node
 		
-		return false;
+		return cond;
 
 	}
 	

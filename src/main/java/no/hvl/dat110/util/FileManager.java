@@ -2,7 +2,7 @@ package no.hvl.dat110.util;
 
 
 /**
- * @author tdoy
+ * @author Henri
  * dat110 - project 3
  */
 
@@ -60,6 +60,12 @@ public class FileManager {
 	 	
 		// set a loop where size = numReplicas
 		
+		numReplicas = Util.numReplicas;
+		
+		for (int i = 0; i < numReplicas; i++) {
+			replicafiles[i] = Hash.hashOf(filename + i);
+		}
+		
 		// replicate by adding the index to filename
 		
 		// hash the replica
@@ -86,17 +92,33 @@ public class FileManager {
     	
     	// create replicas of the filename
     	
+    	createReplicaFiles();
+    	
 		// iterate over the replicas
     	
     	// for each replica, find its successor (peer/node) by performing findSuccessor(replica)
     	
     	// call the addKey on the successor and add the replica
+    	
+    	for (int i = 0; i < replicafiles.length; i++) {
+    		BigInteger fileid = replicafiles[i];
+    		NodeInterface successor = chordnode.findSuccessor(replicafiles[i]);
+    		successor.addKey(replicafiles[i]);
+    	
 		
 		// implement a logic to decide if this successor should be assigned as the primary for the file
     	
     	// call the saveFileContent() on the successor and set isPrimary=true if logic above is true otherwise set isPrimary=false
+    		
+    		if(counter == index) {
+    			successor.saveFileContent(filename, fileid, bytesOfFile, true);
+    		} else {
+    			successor.saveFileContent(filename, fileid, bytesOfFile, false);
+    		}
     	
     	// increment counter
+    		counter++;
+    	}
 		return counter;
     }
 	
@@ -109,19 +131,27 @@ public class FileManager {
 	public Set<Message> requestActiveNodesForFile(String filename) throws RemoteException {
 
 		this.filename = filename;
-		activeNodesforFile = new HashSet<Message>(); 
+		Set<Message> activeNodesforFile = new HashSet<Message>(); 
 
 		// Task: Given a filename, find all the peers that hold a copy of this file
 		
 		// generate the N replicas from the filename by calling createReplicaFiles()
+		createReplicaFiles();
 		
 		// iterate over the replicas of the file
+		
+		for (BigInteger rep : replicafiles) {
+			NodeInterface s = chordnode.findSuccessor(rep);
+			Message message = s.getFilesMetadata(rep);
+			activeNodesforFile.add(message);
+		}
 		
 		// for each replica, do findSuccessor(replica) that returns successor s.
 		
 		// get the metadata (Message) of the replica from the successor (i.e., active peer) of the file
 		
 		// save the metadata in the set activeNodesforFile.
+		this.activeNodesforFile = activeNodesforFile;
 		
 		return activeNodesforFile;
 	}
@@ -129,8 +159,9 @@ public class FileManager {
 	/**
 	 * Find the primary server - Remote-Write Protocol
 	 * @return 
+	 * @throws RemoteException 
 	 */
-	public NodeInterface findPrimaryOfItem() {
+	public NodeInterface findPrimaryOfItem() throws RemoteException {
 
 		// Task: Given all the active peers of a file (activeNodesforFile()), find which is holding the primary copy
 		
@@ -139,6 +170,12 @@ public class FileManager {
 		// for each active peer (saved as Message)
 		
 		// use the primaryServer boolean variable contained in the Message class to check if it is the primary or not
+		
+		for(Message message : activeNodesforFile) {
+			if(message.isPrimaryServer()) {
+				return chordnode.findSuccessor(message.getNodeID());
+			}
+		}
 		
 		// return the primary when found (i.e., use Util.getProcessStub to get the stub and return it)
 		
